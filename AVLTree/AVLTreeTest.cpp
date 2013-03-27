@@ -68,5 +68,7 @@ int main()
 	else
 		cout << "search success element " << searchedVal2 << endl;
 
+	delete CAVLTreeObj1;
+
 	return 0;
 }

@@ -13,15 +13,16 @@ CAVLTree::CAVLTree()
 
 CAVLTree::~CAVLTree()
 {
-	if(T)
-	{
-		if(NULL == T->left && NULL == T->right)
-			delete T;
-		else{
-			delete T->left;
-			delete T->right;
-		}
-	}
+	//if(T)
+	//{
+	//	if(NULL == T->left && NULL == T->right)
+	//		delete T;
+	//	else{
+	//		delete T->left;
+	//		delete T->right;
+	//	}
+	//}
+	deleteTree(T);
 }
 
 //依据各元素的数据值，创建AVL树
@@ -335,4 +336,15 @@ AVLTree CAVLTree::DoubleLeftRotate(AVLTree T)
 	//第二次单旋转
 	//对新产生的树进行一次单旋转-左旋转
 	return SingleLeftRotate(T);
+}
+
+
+void CAVLTree::deleteTree(AVLTree t)
+{
+	if(NULL == t)
+		return;
+
+	deleteTree(t->left);
+	deleteTree(t->right);
+	delete t;
 }

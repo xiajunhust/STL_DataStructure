@@ -29,6 +29,8 @@ private:
 	//双旋转：右左
 	AVLTree DoubleLeftRotate(AVLTree);
 
+	void deleteTree(AVLTree t);//删除一棵AVL树
+
 public:
 	//默认构造函数
 	CAVLTree();
