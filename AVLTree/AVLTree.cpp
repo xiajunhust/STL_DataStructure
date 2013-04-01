@@ -347,4 +347,5 @@ void CAVLTree::deleteTree(AVLTree t)
 	deleteTree(t->left);
 	deleteTree(t->right);
 	delete t;
+	t = NULL;
 }
