@@ -51,12 +51,48 @@ void destroy(T* pointer)
 template <class KeyType>
 struct hash{};
 
+//字符串要进行映射
+inline size_t __stl_hash_string(const char *s)
+{
+	unsigned long h = 0;
+	for (;*s;++s)
+	{
+		h = 5 * h + *s;
+	}
+
+	return size_t(h);
+}
+
 //类模板显示特化定义
 template <>
 struct hash<int>{
 	size_t operator()(int x) const {return x;}
 };
 
+template <>
+struct hash<char *>{
+	size_t operator()(const char *s) const {return __stl_hash_string(s);}
+};
+
+template <>
+struct hash<const char *>{
+	size_t operator()(const char *s) const {return __stl_hash_string(s);}
+};
+
+template <>
+struct hash<char>{
+	size_t operator()(char s) const {return s;}
+};
+
+template <>
+struct hash<unsigned char>{
+	size_t operator()(unsigned char s) const {return s;}
+};
+
+template <>
+struct hash<signed char>{
+	size_t operator()(signed char s) const {return s;}
+};
 
 //hash table数据结构定义
 //模板参数：

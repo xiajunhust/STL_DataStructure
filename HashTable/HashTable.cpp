@@ -43,8 +43,18 @@ int main()
 	cout << "Hash Table 2 bucket count : " << hashTableObj2->bucket_count() << endl;
 	cout << "Hash Table 2 max bucket count : " << hashTableObj2->max_bucket_count() << endl;
 
+	HashTableClass<char *,char *,hash<char *> > *hashTableObjString = new HashTableClass<char *,char *,hash<char *> >(20,hash<char *>());
+	hashTableObjString->insert_unique("jun");
+	hashTableObjString->insert_unique("hust");
+	cout << "Hash Table hashTableObjString size : " << hashTableObjString->size() << endl;
+	cout << "Hash Table hashTableObjString bucket count : " << hashTableObjString->bucket_count() << endl;
+	cout << "Hash Table hashTableObjString max bucket count : " << hashTableObjString->max_bucket_count() << endl;
+	hashTableObjString->printAllNodes();
+	hashTableObjString->printAllBuckets();
+
 	delete hashTableObj;
 	delete hashTableObj2;
+	delete hashTableObjString;
 
 	return 0;
 }
