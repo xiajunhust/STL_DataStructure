@@ -94,12 +94,28 @@ struct hash<signed char>{
 	size_t operator()(signed char s) const {return s;}
 };
 
+//从节点中取出键值的仿函数定义
+//// C++ Standard 规定，每一个 Adaptable Unary Function 都必须继承此类别
+template <class Arg,class Result>
+struct unary_function{
+	typedef Arg argument_type;
+	typedef Result result_type;
+};
+
+//identity function；任何数值通过此函数式后，不会发生任何改变
+template <class T>
+struct identity:public unary_function<T,T>
+{
+	const T& operator()(const T& x) const{return x;}
+};
+
 //hash table数据结构定义
 //模板参数：
 //ValueType：节点的实值型别
 //KeyType：节点的键值型别
 //HashFcn：hash function的函数型别
-template <class ValueType,class KeyType,class HashFcn>
+//ExtractKey：从节点中取出键值的方法
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
 class HashTableClass{
 public:
 	typedef struct __hashtable_node<ValueType> node;//hash table内部链表节点定义
@@ -121,9 +137,9 @@ public:
 	//遍历所有buckets
 	void printAllBuckets();
 	//查找某一键值的节点
-	std::pair<node*,bool> find(const ValueType &obj);
+	std::pair<node*,bool> find(const KeyType &key);
 	//判断某一值出现的次数
-	size_t count(const ValueType &obj);
+	size_t count(const KeyType &key);
 	//整体删除
 	void clear();
 	//复制hash表
@@ -133,6 +149,7 @@ private:
 	std::vector<node*> buckets;//由桶组成的vector
 	size_t num_elements;//总的元素个数
 	HashFcn hasher;
+	ExtractKey get_key;
 
 	//节点配置和释放函数
 	node* new_node(const ValueType &obj)
@@ -168,7 +185,11 @@ private:
 	void resize(size_t num_elements_hint);
 
 	//判断元素落在哪个bucket
-	//必须提供两个版本
+	//提供两个版本
+	//版本一：只接受实值
+	size_t bkt_num(const ValueType &obj) const{return bkt_num_key(get_key(obj));}
+	//版本二：接受实值和buckets个数
+	size_t bkt_num(const ValueType &obj,size_t n) const {return bkt_num_key(get_key(obj),n);}
 	//版本一：只接受键值
 	size_t bkt_num_key(const KeyType &Key) const{return hasher(Key) % (buckets.size());}
 	//版本二：接受键值和buckets个数
@@ -180,46 +201,47 @@ private:
 	node* insert_equal_noresize(const ValueType &obj);
 };
 
-template <class ValueType,class KeyType,class HashFcn>
-HashTableClass<ValueType,KeyType,HashFcn>::HashTableClass(size_t n, const HashFcn &hf)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::HashTableClass(size_t n, const HashFcn &hf)
 :hasher(hf),
+get_key(ExtractKey()),
 num_elements(0)
 {
 	initialize_buckets(n);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-HashTableClass<ValueType,KeyType,HashFcn>::~HashTableClass()
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::~HashTableClass()
 {
 	clear();
 };
 
-template <class ValueType,class KeyType,class HashFcn>
-std::pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node *,bool> 
-HashTableClass<ValueType,KeyType,HashFcn>::insert_unique(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+std::pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *,bool> 
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::insert_unique(const ValueType &obj)
 {
 	resize(num_elements + 1);
 
 	return insert_unique_noresize(obj);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-typename HashTableClass<ValueType,KeyType,HashFcn>::node *
-HashTableClass<ValueType,KeyType,HashFcn>::insert_equal(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::insert_equal(const ValueType &obj)
 {
 	resize(num_elements + 1);
 
 	return insert_equal_noresize(obj);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::printAllNodes()
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::printAllNodes()
 {
 	cout << endl;
 	cout << "Current node in hash table : " << endl;
 	for (size_t i = 0;i < buckets.size();++i)
 	{
-		typename HashTableClass<ValueType,KeyType,HashFcn>::node* curNode = buckets[i];
+		typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node* curNode = buckets[i];
 		while(curNode)
 		{
 			cout << curNode->val << " ";
@@ -229,14 +251,14 @@ void HashTableClass<ValueType,KeyType,HashFcn>::printAllNodes()
 	cout << endl;
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::printAllBuckets()
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::printAllBuckets()
 {
 	cout << endl;
 	cout << "Current buckets in hash table : " << endl;
 	for (size_t i = 0;i < buckets.size();++i)
 	{
-		typename HashTableClass<ValueType,KeyType,HashFcn>::node* curNode = buckets[i];
+		typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node* curNode = buckets[i];
 		if(NULL == curNode)
 			cout << "buckets[" << i << "] is empty!" << endl;
 		else
@@ -259,48 +281,48 @@ void HashTableClass<ValueType,KeyType,HashFcn>::printAllBuckets()
 	}
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-std::pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node *,bool> 
-HashTableClass<ValueType,KeyType,HashFcn>::find(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+std::pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *,bool> 
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::find(const KeyType &key)
 {
-	size_t bucket_index = bkt_num_key(obj);
+	size_t bucket_index = bkt_num_key(key);
 	node*first = buckets[bucket_index];
 	while(first)
 	{
-		if (obj == first->val)
+		if (key == get_key(first->val))
 		{
-			cout << "find the element " << obj << " success" << endl;
-			return std::pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node *,bool>(first,true);
+			cout << "find the element " << key << " success" << endl;
+			return std::pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *,bool>(first,true);
 		}
 		first = first->next;
 	}
 
-	cout << "cannot find the element " << obj << endl;
+	cout << "cannot find the element " << key << endl;
 
-	return std::pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node *,bool>(NULL,false);
+	return std::pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *,bool>(NULL,false);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-size_t HashTableClass<ValueType,KeyType,HashFcn>::count(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+size_t HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::count(const KeyType &key)
 {
-	size_t bucket_index = bkt_num_key(obj);
+	size_t bucket_index = bkt_num_key(key);
 	node*first = buckets[bucket_index];
 	size_t num = 0;
 	while(first)
 	{
-		if (obj == first->val)
+		if (key == get_key(first->val))
 		{
 			++num;
 		}
 		first = first->next;
 	}
 
-	cout << "The element " << obj << " appears " << num << " times" << endl;
+	cout << "The element " << key << " appears " << num << " times" << endl;
 	return num;
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::clear()
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::clear()
 {
 	for (size_t i = 0;i < buckets.size();++i)
 	{
@@ -320,14 +342,14 @@ void HashTableClass<ValueType,KeyType,HashFcn>::clear()
 	//vector并未释放掉空间（自动回收）
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::copy_from(const HashTableClass *ht)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::copy_from(const HashTableClass *ht)
 {
 	buckets.clear();//清除已有vector
 	//使得bucket vector空间和对方相同
 	buckets.reserve(ht->buckets.size());
 	//插入n个元素，null
-	buckets.insert(buckets.end(),ht->buckets.size(),(typename HashTableClass<ValueType,KeyType,HashFcn>::node *)0);
+	buckets.insert(buckets.end(),ht->buckets.size(),(typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *)0);
 
 	for (size_t i = 0;i < ht->buckets.size();++i)
 	{
@@ -346,16 +368,16 @@ void HashTableClass<ValueType,KeyType,HashFcn>::copy_from(const HashTableClass *
 	num_elements = ht->num_elements;
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::initialize_buckets(size_t n)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::initialize_buckets(size_t n)
 {
 	const size_t n_buckets = next_size(n);
 	buckets.reserve(n_buckets);
 	buckets.insert(buckets.end(),n_buckets,(node*)0);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-void HashTableClass<ValueType,KeyType,HashFcn>::resize(size_t num_elements_hint)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+void HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::resize(size_t num_elements_hint)
 {
 	//buckets vector重建与否的标准：
 	//比较新的总元素个数和原buckets vector大小
@@ -383,17 +405,17 @@ void HashTableClass<ValueType,KeyType,HashFcn>::resize(size_t num_elements_hint)
 	}
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-std::pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node *,bool> 
-HashTableClass<ValueType,KeyType,HashFcn>::insert_unique_noresize(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+std::pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node *,bool> 
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::insert_unique_noresize(const ValueType &obj)
 {
-	size_t bucket_index = bkt_num_key(obj);
+	size_t bucket_index = bkt_num(obj);
 	node *first = buckets[bucket_index];
 	//搜索当前链表
 	for (node *curNode = first;curNode;curNode = curNode->next)
 	{
-		if(obj == curNode->val)
-			return pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node*,bool>(curNode,false);
+		if(get_key(obj) == get_key(curNode->val))
+			return pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node*,bool>(curNode,false);
 	}
 
 	node *tempNode = new_node(obj);
@@ -402,19 +424,19 @@ HashTableClass<ValueType,KeyType,HashFcn>::insert_unique_noresize(const ValueTyp
 
 	++num_elements;
 
-	return pair<typename HashTableClass<ValueType,KeyType,HashFcn>::node*,bool>(tempNode,true);
+	return pair<typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node*,bool>(tempNode,true);
 }
 
-template <class ValueType,class KeyType,class HashFcn>
-typename HashTableClass<ValueType,KeyType,HashFcn>::node*
-HashTableClass<ValueType,KeyType,HashFcn>::insert_equal_noresize(const ValueType &obj)
+template <class ValueType,class KeyType,class HashFcn,class ExtractKey>
+typename HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::node*
+HashTableClass<ValueType,KeyType,HashFcn,ExtractKey>::insert_equal_noresize(const ValueType &obj)
 {
-	size_t bucket_index = bkt_num_key(obj);
+	size_t bucket_index = bkt_num(obj);
 	node *first = buckets[bucket_index];
 	for (node *curNode = first;curNode;curNode = curNode->next)
 	{
 		//发现与链表中的某键值相等，马上插入，然后返回
-		if (obj == curNode->val)
+		if (get_key(obj) == get_key(curNode->val))
 		{
 			node *tempNode = new_node(obj);
 			tempNode->next = curNode->next;

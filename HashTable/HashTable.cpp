@@ -4,7 +4,7 @@ using namespace std;
 
 int main()
 {
-	HashTableClass<int,int,hash<int> > *hashTableObj = new HashTableClass<int,int,hash<int> >(50,hash<int>());
+	HashTableClass<int,int,hash<int>,identity<int> > *hashTableObj = new HashTableClass<int,int,hash<int>,identity<int> >(50,hash<int>());
 
 	cout << "Hash Table size : " << hashTableObj->size() << endl;
 	cout << "Hash Table bucket count : " << hashTableObj->bucket_count() << endl;
@@ -32,7 +32,7 @@ int main()
 	hashTableObj->find(2);
 	hashTableObj->count(2);
 
-	HashTableClass<int,int,hash<int> > *hashTableObj2 = new HashTableClass<int,int,hash<int> >(20,hash<int>());
+	HashTableClass<int,int,hash<int>,identity<int> > *hashTableObj2 = new HashTableClass<int,int,hash<int>,identity<int> >(20,hash<int>());
 
 	cout << "Hash Table 2 size : " << hashTableObj2->size() << endl;
 	cout << "Hash Table 2 bucket count : " << hashTableObj2->bucket_count() << endl;
@@ -43,7 +43,7 @@ int main()
 	cout << "Hash Table 2 bucket count : " << hashTableObj2->bucket_count() << endl;
 	cout << "Hash Table 2 max bucket count : " << hashTableObj2->max_bucket_count() << endl;
 
-	HashTableClass<char *,char *,hash<char *> > *hashTableObjString = new HashTableClass<char *,char *,hash<char *> >(20,hash<char *>());
+	HashTableClass<char *,char *,hash<char *>,identity<char*> > *hashTableObjString = new HashTableClass<char *,char *,hash<char *>,identity<char*> >(20,hash<char *>());
 	hashTableObjString->insert_unique("jun");
 	hashTableObjString->insert_unique("hust");
 	cout << "Hash Table hashTableObjString size : " << hashTableObjString->size() << endl;
