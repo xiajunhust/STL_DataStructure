@@ -4,7 +4,7 @@ using namespace std;
 
 int main()
 {
-	HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> > *hashTableObj = new HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> >(50,hash<int>());
+	HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> > *hashTableObj = new HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> >(50,hash<int>(),equal_to<int>());
 
 	cout << "Hash Table size : " << hashTableObj->size() << endl;
 	cout << "Hash Table bucket count : " << hashTableObj->bucket_count() << endl;
@@ -32,7 +32,7 @@ int main()
 	hashTableObj->find(2);
 	hashTableObj->count(2);
 
-	HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> > *hashTableObj2 = new HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> >(20,hash<int>());
+	HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> > *hashTableObj2 = new HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> >(20,hash<int>(),equal_to<int>());
 
 	cout << "Hash Table 2 size : " << hashTableObj2->size() << endl;
 	cout << "Hash Table 2 bucket count : " << hashTableObj2->bucket_count() << endl;
@@ -43,7 +43,12 @@ int main()
 	cout << "Hash Table 2 bucket count : " << hashTableObj2->bucket_count() << endl;
 	cout << "Hash Table 2 max bucket count : " << hashTableObj2->max_bucket_count() << endl;
 
-	HashTableClass<char *,char *,hash<char *>,identity<char*>,equal_to<char*> > *hashTableObjString = new HashTableClass<char *,char *,hash<char *>,identity<char*>,equal_to<char*> >(20,hash<char *>());
+	HashTableClass<int,int,hash<int>,identity<int>,equal_to<int> > hashTableObj3(*hashTableObj2);
+	cout << "Hash Table 3 size : " << hashTableObj3.size() << endl;
+	cout << "Hash Table 3 bucket count : " << hashTableObj3.bucket_count() << endl;
+	cout << "Hash Table 3 max bucket count : " << hashTableObj3.max_bucket_count() << endl;
+
+	HashTableClass<char *,char *,hash<char *>,identity<char*>,eqstr > *hashTableObjString = new HashTableClass<char *,char *,hash<char *>,identity<char*>,eqstr >(20,hash<char *>(),eqstr());
 	hashTableObjString->insert_unique("jun");
 	hashTableObjString->insert_unique("hust");
 	cout << "Hash Table hashTableObjString size : " << hashTableObjString->size() << endl;

@@ -123,6 +123,14 @@ struct equal_to:public binary_function<T,T,bool>{
 	bool operator()(const T& x,const T& y) const{return x == y;}
 };
 
+//比较字符串是否相等的仿函数
+struct eqstr{
+	bool operator()(const char *s1,const char *s2)const
+	{
+		return strcmp(s1,s2) == 0;
+	}
+};
+
 //hash table数据结构定义
 //模板参数：
 //ValueType：节点的实值型别
@@ -135,8 +143,39 @@ class HashTableClass{
 public:
 	typedef struct __hashtable_node<ValueType> node;//hash table内部链表节点定义
 	//hash table没有提供默认构造函数
-	HashTableClass(size_t n,const HashFcn &hf);
-	~HashTableClass();
+	HashTableClass(size_t n,
+		const HashFcn &hf,
+		const EqualKey &eql,
+		const ExtractKey &ext)
+		:hasher(hf),equals(eql),get_key(ext),num_elements(0)
+	{
+		initialize_buckets(n);
+	}
+	HashTableClass(size_t n,
+		const HashFcn &hf,
+		const EqualKey &eql)
+		:hasher(hf),equals(eql),get_key(ExtractKey()),num_elements(0)
+	{
+		initialize_buckets(n);
+	}
+	HashTableClass(const HashTableClass &ht)
+		:hasher(ht.hasher),equals(ht.equals),get_key(ht.get_key),num_elements(0)
+	{
+		copy_from(&ht);
+	}
+	~HashTableClass(){clear();};
+	//赋值操作符
+	HashTableClass& operator= (const HashTableClass &ht)
+	{
+		if (&ht != this)
+		{
+			clear();
+			hasher = ht.hasher;
+			equals = ht.equals;
+			get_key = ht.get_key;
+			copy_from(&ht);
+		}
+	}
 	//返回元素个数
 	size_t size(){return num_elements;}
 	//返回bucket vector大小
@@ -215,21 +254,6 @@ private:
 	std::pair<node *,bool> insert_unique_noresize(const ValueType &obj);
 	//在不需要重新分配bucket vector的情况下插入元素，元素不允许重复
 	node* insert_equal_noresize(const ValueType &obj);
-};
-
-template <class ValueType,class KeyType,class HashFcn,class ExtractKey,class EqualKey>
-HashTableClass<ValueType,KeyType,HashFcn,ExtractKey,EqualKey>::HashTableClass(size_t n, const HashFcn &hf)
-:hasher(hf),
-get_key(ExtractKey()),
-num_elements(0)
-{
-	initialize_buckets(n);
-}
-
-template <class ValueType,class KeyType,class HashFcn,class ExtractKey,class EqualKey>
-HashTableClass<ValueType,KeyType,HashFcn,ExtractKey,EqualKey>::~HashTableClass()
-{
-	clear();
 };
 
 template <class ValueType,class KeyType,class HashFcn,class ExtractKey,class EqualKey>
